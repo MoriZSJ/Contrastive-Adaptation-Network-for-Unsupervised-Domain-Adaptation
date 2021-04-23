@@ -2,16 +2,17 @@ from torch import nn
 from utils.utils import to_cuda
 import torch
 
+
 class CDD(object):
-    def __init__(self, num_layers, kernel_num, kernel_mul, 
+    def __init__(self, num_layers, kernel_num, kernel_mul,
                  num_classes, intra_only=False, **kwargs):
 
         self.kernel_num = kernel_num
         self.kernel_mul = kernel_mul
         self.num_classes = num_classes
-        self.intra_only = intra_only or (self.num_classes==1)
+        self.intra_only = intra_only or (self.num_classes == 1)
         self.num_layers = num_layers
-    
+
     def split_classwise(self, dist, nums):
         num_classes = len(nums)
         start = end = 0
@@ -25,12 +26,12 @@ class CDD(object):
 
     def gamma_estimation(self, dist):
         dist_sum = torch.sum(dist['ss']) + torch.sum(dist['tt']) + \
-	    	2 * torch.sum(dist['st'])
+            2 * torch.sum(dist['st'])
 
         bs_S = dist['ss'].size(0)
         bs_T = dist['tt'].size(0)
         N = bs_S * bs_S + bs_T * bs_T + 2 * bs_S * bs_T - bs_S - bs_T
-        gamma = dist_sum.item() / N 
+        gamma = dist_sum.item() / N
         return gamma
 
     def patch_gamma_estimation(self, nums_S, nums_T, dist):
@@ -40,8 +41,8 @@ class CDD(object):
         patch = {}
         gammas = {}
         gammas['st'] = to_cuda(torch.zeros_like(dist['st'], requires_grad=False))
-        gammas['ss'] = [] 
-        gammas['tt'] = [] 
+        gammas['ss'] = []
+        gammas['tt'] = []
         for c in range(num_classes):
             gammas['ss'] += [to_cuda(torch.zeros([num_classes], requires_grad=False))]
             gammas['tt'] += [to_cuda(torch.zeros([num_classes], requires_grad=False))]
@@ -54,19 +55,19 @@ class CDD(object):
 
             target_start = target_end = 0
             for nt in range(num_classes):
-                target_start = target_end 
-                target_end = target_start + nums_T[nt] 
+                target_start = target_end
+                target_end = target_start + nums_T[nt]
                 patch['tt'] = dist['tt'][nt]
 
-                patch['st'] = dist['st'].narrow(0, source_start, 
-                       nums_S[ns]).narrow(1, target_start, nums_T[nt]) 
+                patch['st'] = dist['st'].narrow(0, source_start,
+                                                nums_S[ns]).narrow(1, target_start, nums_T[nt])
 
                 gamma = self.gamma_estimation(patch)
 
                 gammas['ss'][ns][nt] = gamma
                 gammas['tt'][nt][ns] = gamma
-                gammas['st'][source_start:source_end, \
-                     target_start:target_end] = gamma
+                gammas['st'][source_start:source_end,
+                             target_start:target_end] = gamma
 
         return gammas
 
@@ -77,7 +78,7 @@ class CDD(object):
 
         eps = 1e-5
         gamma_mask = (gamma_tensor < eps).type(torch.cuda.FloatTensor)
-        gamma_tensor = (1.0 - gamma_mask) * gamma_tensor + gamma_mask * eps 
+        gamma_tensor = (1.0 - gamma_mask) * gamma_tensor + gamma_mask * eps
         gamma_tensor = gamma_tensor.detach()
 
         for i in range(len(gamma_tensor.size()) - len(dist.size())):
@@ -92,27 +93,27 @@ class CDD(object):
         return kernel_val
 
     def kernel_layer_aggregation(self, dist_layers, gamma_layers, key, category=None):
-        num_layers = self.num_layers 
+        num_layers = self.num_layers
         kernel_dist = None
         for i in range(num_layers):
 
             dist = dist_layers[i][key] if category is None else \
-                      dist_layers[i][key][category]
+                dist_layers[i][key][category]
 
             gamma = gamma_layers[i][key] if category is None else \
-                      gamma_layers[i][key][category]
+                gamma_layers[i][key][category]
 
             cur_kernel_num = self.kernel_num[i]
             cur_kernel_mul = self.kernel_mul[i]
 
             if kernel_dist is None:
-                kernel_dist = self.compute_kernel_dist(dist, 
-			gamma, cur_kernel_num, cur_kernel_mul) 
+                kernel_dist = self.compute_kernel_dist(dist,
+                                                       gamma, cur_kernel_num, cur_kernel_mul)
 
                 continue
 
-            kernel_dist += self.compute_kernel_dist(dist, gamma, 
-                  cur_kernel_num, cur_kernel_mul) 
+            kernel_dist += self.compute_kernel_dist(dist, gamma,
+                                                    cur_kernel_num, cur_kernel_mul)
 
         return kernel_dist
 
@@ -130,11 +131,11 @@ class CDD(object):
             for col in range(num_classes):
                 col_start = col_end
                 col_end = col_start + nums_col[col]
-                val = torch.mean(dist.narrow(0, row_start, 
-                           nums_row[row]).narrow(1, col_start, nums_col[col]))
+                val = torch.mean(dist.narrow(0, row_start,
+                                             nums_row[row]).narrow(1, col_start, nums_col[col]))
                 mean_tensor[row, col] = val
         return mean_tensor
-        
+
     def compute_paired_dist(self, A, B):
         bs_A = A.size(0)
         bs_T = B.size(0)
@@ -147,12 +148,12 @@ class CDD(object):
 
     def forward(self, source, target, nums_S, nums_T):
         assert(len(nums_S) == len(nums_T)), \
-             "The number of classes for source (%d) and target (%d) should be the same." \
-             % (len(nums_S), len(nums_T))
+            "The number of classes for source (%d) and target (%d) should be the same." \
+            % (len(nums_S), len(nums_T))
 
         num_classes = len(nums_S)
 
-        # compute the dist 
+        # compute the dist
         dist_layers = []
         gamma_layers = []
 
@@ -184,10 +185,10 @@ class CDD(object):
         kernel_dist_ss = []
         kernel_dist_tt = []
         for c in range(num_classes):
-            kernel_dist_ss += [torch.mean(self.kernel_layer_aggregation(dist_layers, 
-                             gamma_layers, 'ss', c).view(num_classes, -1), dim=1)]
-            kernel_dist_tt += [torch.mean(self.kernel_layer_aggregation(dist_layers, 
-                             gamma_layers, 'tt', c).view(num_classes, -1), dim=1)]
+            kernel_dist_ss += [torch.mean(self.kernel_layer_aggregation(dist_layers,
+                                                                        gamma_layers, 'ss', c).view(num_classes, -1), dim=1)]
+            kernel_dist_tt += [torch.mean(self.kernel_layer_aggregation(dist_layers,
+                                                                        gamma_layers, 'tt', c).view(num_classes, -1), dim=1)]
 
         kernel_dist_ss = torch.stack(kernel_dist_ss, dim=0)
         kernel_dist_tt = torch.stack(kernel_dist_tt, dim=0).transpose(1, 0)
@@ -198,8 +199,8 @@ class CDD(object):
 
         inter = None
         if not self.intra_only:
-            inter_mask = to_cuda((torch.ones([num_classes, num_classes]) \
-                    - torch.eye(num_classes)).type(torch.ByteTensor))
+            inter_mask = to_cuda((torch.ones([num_classes, num_classes])
+                                  - torch.eye(num_classes)).type(torch.BoolTensor))
             inter_mmds = torch.masked_select(mmds, inter_mask)
             inter = torch.sum(inter_mmds) / (self.num_classes * (self.num_classes - 1))
 
