@@ -9,6 +9,7 @@ from prepare_data import *
 import sys
 import pprint
 
+
 def parse_args():
     """
     Parse input arguments
@@ -27,12 +28,11 @@ def parse_args():
                         help='set config keys', default=None,
                         nargs=argparse.REMAINDER)
     parser.add_argument('--method', dest='method',
-                        help='set the method to use', 
+                        help='set the method to use',
                         default='CAN', type=str)
     parser.add_argument('--exp_name', dest='exp_name',
-                        help='the experiment name', 
+                        help='the experiment name',
                         default='exp', type=str)
-
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -41,11 +41,12 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def train(args):
     bn_domain_map = {}
 
-    # method-specific setting 
-    if args.method == 'CAN': 
+    # method-specific setting
+    if args.method == 'CAN':
         from solver.can_solver import CANSolver as Solver
         dataloaders = prepare_data_CAN()
         num_domains_bn = 2
@@ -66,8 +67,8 @@ def train(args):
         num_domains_bn = 1
 
     else:
-        raise NotImplementedError("Currently don't support the specified method: %s." 
-                                 % args.method)
+        raise NotImplementedError("Currently don't support the specified method: %s."
+                                  % args.method)
 
     # initialize model
     model_state_dict = None
@@ -84,28 +85,29 @@ def train(args):
         bn_domain_map = param_dict['bn_domain_map']
         fx_pretrained = False
 
-    net = model.danet(num_classes=cfg.DATASET.NUM_CLASSES, 
-                 state_dict=model_state_dict,
-                 feature_extractor=cfg.MODEL.FEATURE_EXTRACTOR, 
-                 frozen=[cfg.TRAIN.STOP_GRAD], 
-                 fx_pretrained=fx_pretrained, 
-                 dropout_ratio=cfg.TRAIN.DROPOUT_RATIO,
-                 fc_hidden_dims=cfg.MODEL.FC_HIDDEN_DIMS, 
-                 num_domains_bn=num_domains_bn)
+    net = model.danet(num_classes=cfg.DATASET.NUM_CLASSES,
+                      state_dict=model_state_dict,
+                      feature_extractor=cfg.MODEL.FEATURE_EXTRACTOR,
+                      frozen=[cfg.TRAIN.STOP_GRAD],
+                      fx_pretrained=fx_pretrained,
+                      dropout_ratio=cfg.TRAIN.DROPOUT_RATIO,
+                      fc_hidden_dims=cfg.MODEL.FC_HIDDEN_DIMS,
+                      num_domains_bn=num_domains_bn)
 
     net = torch.nn.DataParallel(net)
     if torch.cuda.is_available():
-       net.cuda()
+        net.cuda()
 
     # initialize solver
     train_solver = Solver(net, dataloaders, bn_domain_map=bn_domain_map, resume=resume_dict)
 
-    # train 
+    # train
     train_solver.solve()
     print('Finished!')
 
+
 if __name__ == '__main__':
-    cudnn.benchmark = True 
+    cudnn.benchmark = True
     args = parse_args()
 
     print('Called with args:')
@@ -117,11 +119,11 @@ if __name__ == '__main__':
         cfg_from_list(args.set_cfgs)
 
     if args.resume is not None:
-        cfg.RESUME = args.resume 
+        cfg.RESUME = args.resume
     if args.weights is not None:
         cfg.MODEL = args.weights
     if args.exp_name is not None:
-        cfg.EXP_NAME = args.exp_name 
+        cfg.EXP_NAME = args.exp_name
 
     print('Using config:')
     pprint.pprint(cfg)

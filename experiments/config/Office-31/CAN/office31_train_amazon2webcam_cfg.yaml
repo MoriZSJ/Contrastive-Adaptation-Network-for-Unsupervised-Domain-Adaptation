@@ -1,6 +1,6 @@
 DATASET:
   NUM_CLASSES: 31
-  DATAROOT: './experiments/dataset/Office-31'
+  DATAROOT: '../DatasetCollection/Office-31'
   SOURCE_NAME: 'amazon'
   TARGET_NAME: 'webcam'
 
