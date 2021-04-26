@@ -1,10 +1,10 @@
 DATASET:
   NUM_CLASSES: 31
   DATAROOT: '../DatasetCollection/office31'
-  SOURCE_NAME: 'amazon'
-  TARGET_NAME: 'webcam'
+  SOURCE_NAME: 'webcam'
+  TARGET_NAME: 'dslr'
 
-MODEL: 
+MODEL:
   FEATURE_EXTRACTOR: 'resnet50'
 
 TRAIN:

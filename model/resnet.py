@@ -26,9 +26,11 @@ def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=dilation, groups=groups, bias=False, dilation=dilation)
 
+
 def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -87,7 +89,7 @@ class Bottleneck(nn.Module):
         self.bn2 = BatchNormDomain(width, num_domains, norm_layer)
         self.conv3 = conv1x1(width, planes * self.expansion)
         self.bn3 = BatchNormDomain(planes * self.expansion, num_domains,
-                         norm_layer)
+                                   norm_layer)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -118,8 +120,8 @@ class Bottleneck(nn.Module):
 class ResNet(nn.Module):
 
     def __init__(self, block, layers, zero_init_residual=False,
-                 groups=1, width_per_group=64, 
-                 replace_stride_with_dilation=None, #num_classes=1000, 
+                 groups=1, width_per_group=64,
+                 replace_stride_with_dilation=None,  # num_classes=1000,
                  frozen=[], norm_layer=None, num_domains=1):
         super(ResNet, self).__init__()
         if norm_layer is None:
@@ -156,7 +158,7 @@ class ResNet(nn.Module):
         #self.fc = nn.Linear(512 * block.expansion, num_classes)
         self.frozen = frozen
         self.ordered_module_names = ['conv1', 'bn1', 'relu', 'maxpool',
-		'layer1', 'layer2', 'layer3', 'layer4', 'avgpool']
+                                     'layer1', 'layer2', 'layer3', 'layer4', 'avgpool']
         self.domain = None
 
         for m in self.modules():
@@ -217,12 +219,13 @@ class ResNet(nn.Module):
 
         return x
 
+
 def _resnet(arch, block, layers, num_domains, pretrained, progress, **kwargs):
     model = ResNet(block, layers, num_domains=num_domains, **kwargs)
     BN2BNDomain = True
     if pretrained:
         state_dict = vutils.load_state_dict_from_url(model_urls[arch],
-                    progress=progress)
+                                                     progress=progress)
         BN2BNDomain = True
     else:
         state_dict = None
@@ -239,7 +242,7 @@ def resnet18(num_domains=1, pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], num_domains, 
+    return _resnet('resnet18', BasicBlock, [2, 2, 2, 2], num_domains,
                    pretrained, progress, **kwargs)
 
 
@@ -250,7 +253,7 @@ def resnet34(num_domains=1, pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], num_domains, 
+    return _resnet('resnet34', BasicBlock, [3, 4, 6, 3], num_domains,
                    pretrained, progress, **kwargs)
 
 
@@ -261,7 +264,7 @@ def resnet50(num_domains=1, pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], num_domains, 
+    return _resnet('resnet50', Bottleneck, [3, 4, 6, 3], num_domains,
                    pretrained, progress, **kwargs)
 
 
@@ -272,7 +275,7 @@ def resnet101(num_domains=1, pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet101', Bottleneck, [3, 4, 23, 3], num_domains, 
+    return _resnet('resnet101', Bottleneck, [3, 4, 23, 3], num_domains,
                    pretrained, progress, **kwargs)
 
 
@@ -283,7 +286,7 @@ def resnet152(num_domains=1, pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _resnet('resnet152', Bottleneck, [3, 8, 36, 3], num_domains, 
+    return _resnet('resnet152', Bottleneck, [3, 8, 36, 3], num_domains,
                    pretrained, progress, **kwargs)
 
 
