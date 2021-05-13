@@ -1,0 +1,16 @@
+DATASET:
+  NUM_CLASSES: 65
+  DATAROOT: '../DatasetCollection/office-home'
+
+MODEL: 
+  FEATURE_EXTRACTOR: 'resnet50'
+
+TEST:
+  BATCH_SIZE: 100
+  DOMAIN: "Clipart"
+
+EVAL_METRIC: "accuracy"
+SAVE_DIR: "./experiments/ckpt"
+NUM_WORKERS: 8
+# set the path to the trained model here
+WEIGHTS: "/home/mori/Programming/CAN/experiments/ckpt/officehome_a2c/acc5643.weights"

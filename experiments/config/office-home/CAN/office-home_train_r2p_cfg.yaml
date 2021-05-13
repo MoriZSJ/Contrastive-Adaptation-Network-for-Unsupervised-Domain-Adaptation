@@ -1,8 +1,8 @@
 DATASET:
   NUM_CLASSES: 65
   DATAROOT: '../DatasetCollection/office-home'
-  SOURCE_NAME: 'Art'
-  TARGET_NAME: 'Clipart'
+  SOURCE_NAME: 'Realworld'
+  TARGET_NAME: 'Product'
 
 MODEL: 
   FEATURE_EXTRACTOR: 'resnet50'

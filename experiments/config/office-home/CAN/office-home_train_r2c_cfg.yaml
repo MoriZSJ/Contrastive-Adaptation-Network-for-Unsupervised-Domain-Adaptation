@@ -1,7 +1,7 @@
 DATASET:
   NUM_CLASSES: 65
   DATAROOT: '../DatasetCollection/office-home'
-  SOURCE_NAME: 'Art'
+  SOURCE_NAME: 'Realworld'
   TARGET_NAME: 'Clipart'
 
 MODEL: 

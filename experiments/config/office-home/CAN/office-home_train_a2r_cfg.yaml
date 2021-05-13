@@ -2,7 +2,7 @@ DATASET:
   NUM_CLASSES: 65
   DATAROOT: '../DatasetCollection/office-home'
   SOURCE_NAME: 'Art'
-  TARGET_NAME: 'Clipart'
+  TARGET_NAME: 'Realworld'
 
 MODEL: 
   FEATURE_EXTRACTOR: 'resnet50'
