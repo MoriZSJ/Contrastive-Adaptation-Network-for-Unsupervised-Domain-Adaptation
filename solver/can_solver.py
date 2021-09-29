@@ -9,6 +9,7 @@ from discrepancy.cdd import CDD
 from math import ceil as ceil
 from .base_solver import BaseSolver
 from copy import deepcopy
+import time
 
 
 class CANSolver(BaseSolver):
@@ -78,7 +79,7 @@ class CANSolver(BaseSolver):
         if self.resume:
             self.iters += 1
             self.loop += 1
-
+        start_time = time.time()
         while True:
             # updating the target label hypothesis through clustering
             target_hypt = {}
@@ -124,7 +125,8 @@ class CANSolver(BaseSolver):
             # k-step update of network parameters through forward-backward process
             self.update_network(filtered_classes)
             self.loop += 1
-
+            end_time = time.time()
+            print("cost time: ", end_time - start_time)
         print('Training Done!')
 
     def update_labels(self):
@@ -286,6 +288,7 @@ class CANSolver(BaseSolver):
                 with torch.no_grad():
                     self.net.module.set_bn_domain(self.bn_domain_map[self.target_name])
                     accu = self.test()
+
                     print('Test at (loop %d, iters: %d) with %s: %.4f.' % (self.loop,
                                                                            self.iters, self.opt.EVAL_METRIC, accu))
 
